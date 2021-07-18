@@ -74,10 +74,86 @@ Top-order batters face more dot balls than middle-order batters in all teams and
 
 ## Data Modelling and Model Evaluation
 
-K-means clustering is an unsupervised learning method that uses Euclidean distances to group individual observations into clusters. 
+K-means clustering is an unsupervised learning method that uses Euclidean distances to group individual observations into a number, k, of clusters. We will perform k-means clustering on the innings-by-innings data in an attempt to reveal more information about the batting strategies used by different IPL teams. The first 
 
+The parameters used in the k-means algorithm, as defined in the scikit-learn documentation, are described in the table below.
 
+|Parameter|Description|Default value|
+|----|----|
+|n_init|Number of times the k-means algorithm will be run with different centroid seeds.|10|
+|max_iter|Maximum number of iterations of the k-means algorithm for a single run.|300|
+|max_nclus|Maximum number of clusters the k-means solution will have.|20|
 
+The k-means method used calculates the sum of squared error, that is the sum of the Euclidean distance from each point to its cluster centroid, for solutions with a range of *k*s, from 1 to the user-defined maximum, *max_nclus*. The 'knee-method' was then used to find the number of clusters that gives the optimum compromise between the number of clusters and the discrimination between clusters. For the first k-means solution, the default values of all parameters were used.
+
+The variables used to create the first k-means clustering solution are listed in the table below.
+
+|Variable|Description|
+|----|----|
+|bat_innings_runs|Runs scored by batter in innings|
+|bat_innings_balls_faced|Balls faced by batter in innings|
+|bat_innings_0s_prop|Proportion of balls faced by batter in innings that were dot balls|
+|bat_innings_1s_prop|Proportion of balls faced by batter in innings from which 1 run was scored off the bat|
+|bat_innings_2s_prop|Proportion of balls faced by batter in innings from which 2 runs were scored off the bat|
+|bat_innings_4s_prop|Proportion of balls faced by batter in innings from which 4 runs were scored off the bat|
+|bat_innings_6s_prop|Proportion of balls faced by batter in innings from which 6 runs were scored off the bat|
+|bat_order_striker|Batting position of the batter who played the innings (1-11)|
+|bat_order_striker_cat|Batting position category of the batter who played the innings (Top/Middle/Lower/Tail)|
+
+The resulting clusters are then profiled against the numeric input variables, the results of which are shown in box/violin plots below, and against the eight IPL teams, the results of which are show in the bar plots. The horizontal lines on the box/violin plots show the mean value for each variable across all innings and the horizontal lines on the bar plots show the proportion of the total innings used to create the clustering solution that were played by the corresponding team.
+
+![](Plots/box_1.png)
+![](Plots/bar_1.png)
+
+The first clustering solution contains 6 clusters and while the results are promising since the clusters appear to discriminate well between certain types of innings, they do not discriminate well enough between the teams.
+
+For the second clustering solution, the same input variables are used, *max_nclus* is increased to 40, *n_init* is increased to 20 and *max_iter* is increased to 600.
+
+![](Plots/box_2.png)
+![](Plots/bar_2.png)
+
+The clusters are described in the table below.
+
+|Cluster|Average runs (average balls)|Innings makeup|Batter category|Teams|
+|----|----|----|----|
+|0|14(14)|Over-indexed on dots and 4s|Top-order|Rajasthan Royals|
+|1|13(7)|Over-indexed on 4s|Lower-order/tail|Delhi Capitals, Kolkata Knight Riders|
+|2|1(3)|Dot balls|Tail|Chennai Super Kings and Sunrisers Hyderabad good at avoiding these innings|
+|3|27(21)|1s, 2s, 6s|Middle-order|Chennai Super Kings|
+|4|61(42)|1s, 2s, 4s, 6s|Top-order|Chennai Super Kings, Sunrisers Hyderabad|
+|5|21(9)|6s|Middle-/lower-order|Mumbai Indians, Kolkata Knight Riders|
+|6|8(7)|2s|Middle-/lower-order/tail|Sunrisers Hyderabad, Punjab Kings, Chennai Super Kings|
+|7|4(4)|1s|Lower-order/tail|Sunrisers Hyderabad, Punjab Kings|
+|8|6(8)|Dot balls, 1s|Middle-/lower-order/tail|Punjab Kings, Royal Challengers Bangalore|
+
+This solution offers a bit more discrimination between teams and therefore enables us to tell a bit more about the batting tactics employed by different teams. However, the clusters are still defined slightly too much by the number of runs scored and balls faced, rather than which scoring shots have been used to put together the innings. Scoring a lot of runs from a small number of balls is a universal goal of batting in T20 cricket and this therefore tells us more about who has been successful than how teams try to go about achieving this goal. For the third clustering solution, *max_nclus* has been increased to 60, *n_init* has been increased to 40, *max_iter* has been increased to 1000 and the following variables have been added.
+
+|Variable|Description|
+|----|----|
+|bat_innings_0s|Number of dot balls in an innings|
+|bat_innings_1s|Number of balls from which 1 run was scored off the bat|
+|bat_innings_2s|Number of balls from which 2 runs were scored off the bat|
+|bat_innings_4s|Number of balls from which 4 runs were scored off the bat|
+|bat_innings_6s|Number of balls from which 6 runs were scored off the bat|
+
+![](Plots/box_3.png)
+![](Plots/bar_3.png)
+
+The clusters are described in the table below.
+
+|Cluster|Average runs (average balls)|Innings makeup|Batter category|Teams|
+|----|----|----|----|
+|0|63(46)|1s, 2s, 4s|Top-order|Sunrisers Hyderabad, Chennai Super Kings|
+|1|1(3)|Dots|Lower-order/tail|Chennai Super Kings and Sunrisers Hyderabad good at avoiding these innings|
+|2|11(12)|Dots, 4s|Top-order|Rajasthan Royals, avoided by Sunrisers Hyderabad and Punjab Kings|
+|3|8(6)|2s|Middle-/lower-order/tail|Sunrisers Hyderabad, Punjab Kings|
+|4|4(4)|1s|Lower-order/tail|Sunrisers Hyderabad, Punjab Kings|
+|5|13(7)|4s|Lower-order/tail|Delhi Capitals, Kolkata Knight Riders|
+|6|20(10)|6s|Middle-/lower-order|Mumbai Indians, Sunrisers Hyderabad|
+|7|76(42)|4s, 6s|Top-order|Chennai Super Kings, Royal Challengers Bangalore|
+|8|36(29)|4s|Top-order|Chennai Super Kings, Mumbai Indians|
+|9|7(8)|1s|Middle-/lower-order/tail|Punjab Kings, Royal Challengers Bangalore|
+|10|27(21)|1s, 2s, 6s|Middle-order|Chennai Super Kings, Rajasthan Royals|
 
 
 

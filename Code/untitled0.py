@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from kneed import KneeLocator
+import matplotlib.pyplot as plt
 
 # Define competition. Choose one of the following:
 #   - IPL: ipl
@@ -123,8 +124,6 @@ for i in list(range(0,7)):
                    .groupby('striker')['bat_career_{0}s'.format(i)]
                    .fillna(method='ffill').fillna(0))
 
-
-
 # Check
 #test = df_all_matches[df_all_matches['striker']=='SC Ganguly'][['striker','runs_off_bat','bat_career_balls_faced','bat_career_0s',
 #              'bat_career_1s','bat_career_2s','bat_career_3s','bat_career_4s','bat_career_6s']]
@@ -143,13 +142,15 @@ df_all_matches['bat_innings_runs'] = (df_all_matches
 # Tick
 
 # Create rolling balls faced for a batsman
+# If not wide, add 1
 df_all_matches['bat_innings_balls_faced'] = (df_all_matches[
         df_all_matches.wides.isna()].groupby(['match_id','striker']).cumcount()+1)
+# If wide, forward fill then fill with 0 for instances where batter faces one ball
+# and it's a wide.
 df_all_matches['bat_innings_balls_faced'] = (df_all_matches
               .groupby(['match_id','striker'])['bat_innings_balls_faced']
-              .fillna(method='bfill')
-              .fillna(method='ffill')
-              )
+              #.fillna(method='bfill'))
+              .fillna(method='ffill').fillna(0))
 
 # Check
 #test = df_all_matches[df_all_matches['striker']=='SC Ganguly'][['match_id','striker','wides','bat_innings_balls_faced']]
@@ -253,6 +254,21 @@ df_all_matches_bat_inns = (df_all_matches
 
 #df_all_matches_bat_inns.to_csv("df_all_matches_bat_inns.csv")
 
+# Have a go at visualising this data
+# - Scatter plots:
+#   - x-axis: balls faced, y-axis: runs scored, colour: team, shape: top/middle/lower-middle/lower order
+#   - same but separate plots for each year, or a selection of years (e.g. 2008, 2014, 2020)
+#   - x-axis: balls faced, y-axis: runs scored, colour: team, shape: 1st/2nd innings
+# - Bar plots:
+#   - x-axis: year, y-axis: proportion of 0s, 1s, ..., 6s
+#   - same but split by team
+# - Line plots:
+#   - x-axis: year, y-axis: strike rate, colour: team
+#   - x-axis: year, y-axis: strike rate, colour: team, line style: top/middle/lower-middle/lower order
+#   - x-axis: year, y-axis: strike rate, colour: team, line style: 1st/2nd innings
+
+
+
 # Variables to use for clustering:
 # Numeric (to be standardised before clustering): bat_innings_runs, bat_innings_balls_faced, bat_innings_0s, bat_innings_1s,
 #   bat_innings_2s, bat_innings_3s, bat_innings_4s, bat_innings_5s, bat_innings_6s, bat_order_striker
@@ -343,14 +359,12 @@ prof_features = ['bat_innings_runs', 'bat_innings_balls_faced','bat_innings_stri
                  'bat_order_striker_cat_LowerOrder',
                  'batting_team_Chennai Super Kings',
                  'batting_team_Deccan Chargers', 'batting_team_Delhi Capitals',
-                 'batting_team_Delhi Daredevils', 'batting_team_Gujarat Lions',
-                 'batting_team_Kings XI Punjab', 
+                 'batting_team_Gujarat Lions', 
                  'batting_team_Kochi Tuskers Kerala',
                  'batting_team_Kolkata Knight Riders', 
                  'batting_team_Mumbai Indians', 'batting_team_Pune Warriors', 
                  'batting_team_Punjab Kings', 'batting_team_Rajasthan Royals', 
                  'batting_team_Rising Pune Supergiant', 
-                 'batting_team_Rising Pune Supergiants',
                  'batting_team_Royal Challengers Bangalore',
                  'batting_team_Sunrisers Hyderabad']
 
@@ -366,7 +380,7 @@ df_clustered_melt['index'] = round(100*df_clustered_melt['cluster_mean']/df_clus
 GI = (df_clustered_melt[['inns_cluster','variable','variable_mean','cluster_mean','index']].
       drop_duplicates(subset = ['inns_cluster','variable']).
       pivot_table(index=['variable','variable_mean'],columns='inns_cluster'))
-
+GI.to_csv('GI.csv')
 
 
 

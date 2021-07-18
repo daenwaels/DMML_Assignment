@@ -10,6 +10,8 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from kneed import KneeLocator
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def ballbyballvars(df):
     
@@ -163,9 +165,57 @@ def clusinns_kmeans(df,categorical_features,numeric_features,prof_features,init=
     df_clustered_melt['variable_mean'] = df_clustered_melt.groupby(['variable'])['value'].transform('mean')
     df_clustered_melt['index'] = round(100*df_clustered_melt['cluster_mean']/df_clustered_melt['variable_mean'])
     
+    fig,ax = plt.subplots(3,3, figsize=(10,12))
+    box = sns.boxplot(ax=ax[0,0],data=df_clustered,x='inns_cluster',y='bat_innings_runs')
+    box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_runs'].groupby(['variable'])['value'].
+                transform('mean').drop_duplicates().item())
+    box = sns.boxplot(ax=ax[0,1],data=df_clustered,x='inns_cluster',y='bat_innings_balls_faced')
+    box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_balls_faced'].groupby(['variable'])['value'].
+                transform('mean').drop_duplicates().item())
+    box = sns.boxplot(ax=ax[0,2],data=df_clustered,x='inns_cluster',y='bat_innings_strike_rate')
+    box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_strike_rate'].groupby(['variable'])['value'].
+                transform('mean').drop_duplicates().item())
+    box = sns.violinplot(ax=ax[1,0],data=df_clustered,x='inns_cluster',y='bat_order_striker')
+    box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_order_striker'].groupby(['variable'])['value'].
+                transform('mean').drop_duplicates().item())
+    box = sns.boxplot(ax=ax[1,1],data=df_clustered,x='inns_cluster',y='bat_innings_0s_prop')
+    box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_0s_prop'].groupby(['variable'])['value'].
+                transform('mean').drop_duplicates().item())
+    box = sns.boxplot(ax=ax[1,2],data=df_clustered,x='inns_cluster',y='bat_innings_1s_prop')
+    box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_1s_prop'].groupby(['variable'])['value'].
+                transform('mean').drop_duplicates().item())
+    box = sns.boxplot(ax=ax[2,0],data=df_clustered,x='inns_cluster',y='bat_innings_2s_prop')
+    box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_2s_prop'].groupby(['variable'])['value'].
+                transform('mean').drop_duplicates().item())
+    box = sns.boxplot(ax=ax[2,1],data=df_clustered,x='inns_cluster',y='bat_innings_4s_prop')
+    box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_4s_prop'].groupby(['variable'])['value'].
+                transform('mean').drop_duplicates().item())
+    box = sns.boxplot(ax=ax[2,2],data=df_clustered,x='inns_cluster',y='bat_innings_6s_prop')
+    box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_6s_prop'].groupby(['variable'])['value'].
+                transform('mean').drop_duplicates().item())
+    ax[0,0].set(ylabel='Runs scored',xlabel='Innings cluster')
+    ax[0,1].set(ylabel='Balls faced',xlabel='Innings cluster')
+    ax[0,2].set(ylabel='Strike rate',xlabel='Innings cluster')
+    ax[1,0].set(ylabel='Batting order',xlabel='Innings cluster')
+    ax[1,1].set(ylabel='0s proportion',xlabel='Innings cluster')
+    ax[1,2].set(ylabel='1s proportion',xlabel='Innings cluster')
+    ax[2,0].set(ylabel='2s proportion',xlabel='Innings cluster')
+    ax[2,1].set(ylabel='4s proportion',xlabel='Innings cluster')
+    ax[2,2].set(ylabel='6s proportion',xlabel='Innings cluster')
+    plt.tight_layout()
+    
+    fig2,ax2 = plt.subplots(4,2, figsize=(10,12))
+    for team, ax in zip(teams, ax2.flat):
+        bar = sns.barplot(ax=ax,data=df_clustered_melt[df_clustered_melt['variable']=='batting_team_{0}'.format(team)],
+                x='inns_cluster',y='cluster_mean')
+        bar.axhline(df_clustered_melt[df_clustered_melt['variable']=='batting_team_{0}'.format(team)].
+                                      groupby(['variable'])['value'].transform('mean').drop_duplicates().item())
+        ax.set(ylabel=team,xlabel='Innings cluster')
+    plt.tight_layout()    
+    
     # Drop duplicates and pivot to get Grand Index
     GI = (df_clustered_melt[['inns_cluster','variable','variable_mean','cluster_mean','index']].
           drop_duplicates(subset = ['inns_cluster','variable']).
           pivot_table(index=['variable','variable_mean'],columns='inns_cluster'))
     
-    return df_clustered, GI
+    return df_clustered, GI, fig, fig2

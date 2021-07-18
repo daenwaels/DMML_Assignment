@@ -93,9 +93,10 @@ df_all_matches = df_all_matches.replace("Rising Pune Supergiants",
 # After more thought, I've decided to keep batting innings played by only the current 8 teams, since Deccan Chargers last 
 # played in 2012 and KTK, PW, GL and RPS played no more than 3 seasons each.
 
-df_all_matches = (df_all_matches[df_all_matches['batting_team'].isin(['Chennai Super Kings','Delhi Capitals',
-                                'Kolkata Knight Riders','Mumbai Indians','Punjab Kings','Rajasthan Royals',
-                                'Royal Challengers Bangalore','Sunrisers Hyderabad'])].reset_index())
+teams = ['Chennai Super Kings','Delhi Capitals','Kolkata Knight Riders','Mumbai Indians','Punjab Kings','Rajasthan Royals',
+         'Royal Challengers Bangalore','Sunrisers Hyderabad']
+
+df_all_matches = (df_all_matches[df_all_matches['batting_team'].isin(teams)].reset_index())
 
 #%% Non-IPL-specific
     
@@ -338,13 +339,20 @@ prof_features_1 = ['bat_innings_runs','bat_innings_balls_faced','bat_innings_str
                    'batting_team_Rajasthan Royals','batting_team_Royal Challengers Bangalore',
                    'batting_team_Sunrisers Hyderabad']
 
-df_clustered_1, GI_1 = clusinns_kmeans(df_all_matches_bat_inns,categorical_features_1,numeric_features_1,prof_features_1)
+df_clustered_1, GI_1, box_1, bar_1 = clusinns_kmeans(df_all_matches_bat_inns,categorical_features_1,numeric_features_1,
+                                                     prof_features_1)
+
+box_1.savefig("../Plots/box_1.png")
+bar_1.savefig("../Plots/bar_1.png")
 
 GI_1.to_csv("GI_1.csv")
 pd.value_counts(df_clustered_1.inns_cluster)
 
-df_clustered_2, GI_2 = clusinns_kmeans(df_all_matches_bat_inns,categorical_features_1,numeric_features_1,prof_features_1,
-                                       max_nclus=40,n_init=20,max_iter=600,random_state=1)
+df_clustered_2, GI_2, box_2, bar_2 = clusinns_kmeans(df_all_matches_bat_inns,categorical_features_1,numeric_features_1,
+                                                     prof_features_1,max_nclus=40,n_init=20,max_iter=600,random_state=1)
+
+box_2.savefig("../Plots/box_2.png")
+bar_2.savefig("../Plots/bar_2.png")
 
 GI_2.to_csv("GI_2.csv")
 pd.value_counts(df_clustered_2.inns_cluster)
@@ -367,18 +375,67 @@ pd.value_counts(df_clustered_2.inns_cluster)
 # - Cluster 8 (6 off 8) is an innings played by middle- and lower-order batters and tailenders where they fail to get going.
 #   Over-indexed on dots and 1s. PK, RCB.
 
-# Box/violin plots of runs scored and balls faced by cluster
+# See if I can increase the number of meaningful clusters by increasing max_nclus, n_init and max_iter. Remove absolute
+# number of 0s, 1s, ..., 6s while I'm at it.
+
+#prof_features_3 = ['bat_innings_runs','bat_innings_balls_faced','bat_innings_strike_rate','bat_innings_0s_prop',
+#                   'bat_innings_1s_prop','bat_innings_2s_prop','bat_innings_4s_prop','bat_innings_6s_prop',
+#                   'bat_order_striker','bat_order_striker_cat_Top','bat_order_striker_cat_Middle',
+#                   'bat_order_striker_cat_Lower','bat_order_striker_cat_Tail','batting_team_Chennai Super Kings',
+#                   'batting_team_Delhi Capitals','batting_team_Kolkata Knight Riders','batting_team_Mumbai Indians',
+#                   'batting_team_Punjab Kings','batting_team_Rajasthan Royals','batting_team_Royal Challengers Bangalore',
+#                   'batting_team_Sunrisers Hyderabad']
+#
+#df_clustered_3, GI_3 = clusinns_kmeans(df_all_matches_bat_inns,categorical_features_1,numeric_features_1,prof_features_3,
+#                                       max_nclus=60,n_init=40,max_iter=1000,random_state=1)
+#GI_3.to_csv('GI_3.csv')
+
+# This looks even better at first glance
+
+# Add absolute number of 0s, 1s, ..., 6s to see if it increases ability to tease out other clusters.
+
+numeric_features_3 = ['bat_innings_runs','bat_innings_balls_faced','bat_innings_0s_prop','bat_innings_1s_prop',
+                      'bat_innings_2s_prop','bat_innings_4s_prop','bat_innings_6s_prop','bat_order_striker',
+                      'bat_innings_0s','bat_innings_1s','bat_innings_2s','bat_innings_4s','bat_innings_6s']
+
+prof_features_3 = ['bat_innings_runs','bat_innings_balls_faced','bat_innings_strike_rate','bat_innings_0s_prop',
+                   'bat_innings_1s_prop','bat_innings_2s_prop','bat_innings_4s_prop','bat_innings_6s_prop',
+                   'bat_order_striker','bat_order_striker_cat_Top','bat_order_striker_cat_Middle',
+                   'bat_order_striker_cat_Lower','bat_order_striker_cat_Tail','batting_team_Chennai Super Kings',
+                   'batting_team_Delhi Capitals','batting_team_Kolkata Knight Riders','batting_team_Mumbai Indians',
+                   'batting_team_Punjab Kings','batting_team_Rajasthan Royals','batting_team_Royal Challengers Bangalore',
+                   'batting_team_Sunrisers Hyderabad']
+
+df_clustered_3, GI_3, box_3, bar_3 = clusinns_kmeans(df_all_matches_bat_inns,categorical_features_1,numeric_features_3,
+                                                     prof_features_3,max_nclus=60,n_init=40,max_iter=1000,random_state=1)
+
+box_3.savefig("../Plots/box_3.png")
+bar_3.savefig("../Plots/bar_3.png")
+
+GI_3.to_csv('GI_3.csv')
+# This looks pretty good as well. Some differentiation between two types of 'good' top order innings
+
+df_clustered_melt = pd.melt(df_clustered_3, id_vars = ['inns_cluster'],
+                            value_vars = prof_features_3)
+
+df_clustered_melt['cluster_mean'] = df_clustered_melt.groupby(['inns_cluster','variable'])['value'].transform('mean')
+df_clustered_melt['variable_mean'] = df_clustered_melt.groupby(['variable'])['value'].transform('mean')
+df_clustered_melt['index'] = round(100*df_clustered_melt['cluster_mean']/df_clustered_melt['variable_mean'])
 
 fig,ax = plt.subplots(3,3, figsize=(10,12))
-sns.boxplot(ax=ax[0,0],data=df_clustered_2,x='inns_cluster',y='bat_innings_runs')
-sns.boxplot(ax=ax[0,1],data=df_clustered_2,x='inns_cluster',y='bat_innings_balls_faced')
-sns.boxplot(ax=ax[0,2],data=df_clustered_2,x='inns_cluster',y='bat_innings_strike_rate')
-sns.violinplot(ax=ax[1,0],data=df_clustered_2,x='inns_cluster',y='bat_order_striker')
-sns.boxplot(ax=ax[1,1],data=df_clustered_2,x='inns_cluster',y='bat_innings_0s_prop')
-sns.boxplot(ax=ax[1,2],data=df_clustered_2,x='inns_cluster',y='bat_innings_1s_prop')
-sns.boxplot(ax=ax[2,0],data=df_clustered_2,x='inns_cluster',y='bat_innings_2s_prop')
-sns.boxplot(ax=ax[2,1],data=df_clustered_2,x='inns_cluster',y='bat_innings_4s_prop')
-sns.boxplot(ax=ax[2,2],data=df_clustered_2,x='inns_cluster',y='bat_innings_6s_prop')
+box=sns.boxplot(ax=ax[0,0],data=df_clustered_3,x='inns_cluster',y='bat_innings_runs')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_runs'].
+                                      groupby(['variable'])['value'].transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[0,1],data=df_clustered_3,x='inns_cluster',y='bat_innings_balls_faced')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_balls_faced'].
+                                      groupby(['variable'])['value'].transform('mean').drop_duplicates().item())
+sns.boxplot(ax=ax[0,2],data=df_clustered_3,x='inns_cluster',y='bat_innings_strike_rate')
+sns.violinplot(ax=ax[1,0],data=df_clustered_3,x='inns_cluster',y='bat_order_striker')
+sns.boxplot(ax=ax[1,1],data=df_clustered_3,x='inns_cluster',y='bat_innings_0s_prop')
+sns.boxplot(ax=ax[1,2],data=df_clustered_3,x='inns_cluster',y='bat_innings_1s_prop')
+sns.boxplot(ax=ax[2,0],data=df_clustered_3,x='inns_cluster',y='bat_innings_2s_prop')
+sns.boxplot(ax=ax[2,1],data=df_clustered_3,x='inns_cluster',y='bat_innings_4s_prop')
+sns.boxplot(ax=ax[2,2],data=df_clustered_3,x='inns_cluster',y='bat_innings_6s_prop')
 ax[0,0].set(ylabel='Runs scored',xlabel='Innings cluster')
 ax[0,1].set(ylabel='Balls faced',xlabel='Innings cluster')
 ax[0,2].set(ylabel='Strike rate',xlabel='Innings cluster')
@@ -389,37 +446,6 @@ ax[2,0].set(ylabel='2s proportion',xlabel='Innings cluster')
 ax[2,1].set(ylabel='4s proportion',xlabel='Innings cluster')
 ax[2,2].set(ylabel='6s proportion',xlabel='Innings cluster')
 plt.tight_layout()
-plt.savefig("box_1.png")
-
-# See if I can increase the number of meaningful clusters by increasing max_nclus, n_init and max_iter. Remove absolute
-# number of 0s, 1s, ..., 6s while I'm at it.
-
-prof_features_3 = ['bat_innings_runs','bat_innings_balls_faced','bat_innings_strike_rate','bat_innings_0s_prop',
-                   'bat_innings_1s_prop','bat_innings_2s_prop','bat_innings_4s_prop','bat_innings_6s_prop',
-                   'bat_order_striker','bat_order_striker_cat_Top','bat_order_striker_cat_Middle',
-                   'bat_order_striker_cat_Lower','bat_order_striker_cat_Tail','batting_team_Chennai Super Kings',
-                   'batting_team_Delhi Capitals','batting_team_Kolkata Knight Riders','batting_team_Mumbai Indians',
-                   'batting_team_Punjab Kings','batting_team_Rajasthan Royals','batting_team_Royal Challengers Bangalore',
-                   'batting_team_Sunrisers Hyderabad']
-
-df_clustered_3, GI_3 = clusinns_kmeans(df_all_matches_bat_inns,categorical_features_1,numeric_features_1,prof_features_3,
-                                       max_nclus=60,n_init=40,max_iter=1000,random_state=1)
-GI_3.to_csv('GI_3.csv')
-
-# This looks even better at first glance
-
-# Add absolute number of 0s, 1s, ..., 6s to see if it increases ability to tease out other clusters.
-
-numeric_features_4 = ['bat_innings_runs','bat_innings_balls_faced','bat_innings_0s_prop','bat_innings_1s_prop',
-                      'bat_innings_2s_prop','bat_innings_4s_prop','bat_innings_6s_prop','bat_order_striker',
-                      'bat_innings_0s','bat_innings_1s','bat_innings_2s','bat_innings_4s','bat_innings_6s']
-
-df_clustered_4, GI_4 = clusinns_kmeans(df_all_matches_bat_inns,categorical_features_1,numeric_features_4,prof_features_3,
-                                       max_nclus=60,n_init=40,max_iter=1000,random_state=1)
-GI_4.to_csv('GI_4.csv')
-# This looks pretty good as well. Some differentiation between two types of 'good' top order innings
-
-
 
 
 
