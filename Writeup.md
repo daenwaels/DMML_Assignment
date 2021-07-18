@@ -79,7 +79,7 @@ K-means clustering is an unsupervised learning method that uses Euclidean distan
 The parameters used in the k-means algorithm, as defined in the scikit-learn documentation, are described in the table below.
 
 |Parameter|Description|Default value|
-|----|----|
+|----|----|----|
 |n_init|Number of times the k-means algorithm will be run with different centroid seeds.|10|
 |max_iter|Maximum number of iterations of the k-means algorithm for a single run.|300|
 |max_nclus|Maximum number of clusters the k-means solution will have.|20|
@@ -115,7 +115,7 @@ For the second clustering solution, the same input variables are used, *max_nclu
 The clusters are described in the table below.
 
 |Cluster|Average runs (average balls)|Innings makeup|Batter category|Teams|
-|----|----|----|----|
+|----|----|----|----|----|
 |0|14(14)|Over-indexed on dots and 4s|Top-order|Rajasthan Royals|
 |1|13(7)|Over-indexed on 4s|Lower-order/tail|Delhi Capitals, Kolkata Knight Riders|
 |2|1(3)|Dot balls|Tail|Chennai Super Kings and Sunrisers Hyderabad good at avoiding these innings|
@@ -142,7 +142,7 @@ This solution offers a bit more discrimination between teams and therefore enabl
 The clusters are described in the table below.
 
 |Cluster|Average runs (average balls)|Innings makeup|Batter category|Teams|
-|----|----|----|----|
+|----|----|----|----|----|
 |0|63(46)|1s, 2s, 4s|Top-order|Sunrisers Hyderabad, Chennai Super Kings|
 |1|1(3)|Dots|Lower-order/tail|Chennai Super Kings and Sunrisers Hyderabad good at avoiding these innings|
 |2|11(12)|Dots, 4s|Top-order|Rajasthan Royals, avoided by Sunrisers Hyderabad and Punjab Kings|
