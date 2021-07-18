@@ -46,35 +46,35 @@ Ball-by-ball data for every IPL match since the competition's advent in 2008 is 
 |other_player_dismissed|This is always empty|
 |----|----|
 
-In order to investigate individual innings, some pre-processing was required to clean the data and convert the ball-by-ball data described above into innings-by-innings data. First, innings played by teams other than the eight who currently compete in the IPL were removed. This is because a) some of these teams competed in the IPL for very short periods and so the data collected may not have been sufficient from which to draw any conclusions and b) the batting strategies of now defunct teams is of little interest to current coaches and players. The eight current teams are Chennai Super Kings, Delhi Capitals, Kolkata Knight Riders, Mumbai Indians, Punjab Kings, Rajasthan Royals, Royal Challengers Bangalore and Sunrisers Hyderabad. Punjab Kings used to be called Kings XI Punjab and Delhi Capitals used to be called Delhi Daredevils. Instances where the data contained the old names for these teams were fixed to include the new names. If an IPL match is tied, a super-over is played. This is where the two teams play a single over each and the team who scores the most runs wins the match. These are recorded in the raw data as innings 3, 4, 5 and 6 and since they are isolated events with distinct tactics, instances with *innings* greater than 2 have been removed. The pre-processing included aggregating the *runs_off_bat* field to get a rolling total of runs scored by a batter in an individual innings, as well as creating a rolling count of the number of balls faced and using the *runs_off_bat* field to create a rolling count of the number of 0s (dot balls) faced and 1s, 2s, 3s, 4s, 5s and 6s scored by a batter in an innings. The idea being that this will give us an idea of the way in which a batter goes about scoring their runs: whether they are happy to face dot balls and wait for a ball they can hit for 4 or 6 or whether they look to score from every ball they face but hit fewer boundaries.
+In order to investigate individual innings, some pre-processing was required to clean the data and convert the ball-by-ball data described above into innings-by-innings data. First, innings played by teams other than the eight who currently compete in the IPL were removed. This is because a) some of these teams competed in the IPL for very short periods and so the data collected may not have been sufficient from which to draw any conclusions and b) the batting strategies of now defunct teams is of little interest to current coaches and players. The eight current teams are Chennai Super Kings (CSK), Delhi Capitals (DC), Kolkata Knight Riders (KKR), Mumbai Indians (MI), Punjab Kings (PK), Rajasthan Royals (RR), Royal Challengers Bangalore (RCB) and Sunrisers Hyderabad (SH). Punjab Kings used to be called Kings XI Punjab and Delhi Capitals used to be called Delhi Daredevils. Instances where the data contained the old names for these teams were fixed to include the new names. If an IPL match is tied, a super-over is played. This is where the two teams play a single over each and the team who scores the most runs wins the match. These are recorded in the raw data as innings 3, 4, 5 and 6 and since they are isolated events with distinct tactics, instances with *innings* greater than 2 have been removed. The pre-processing included aggregating the *runs_off_bat* field to get a rolling total of runs scored by a batter in an individual innings, as well as creating a rolling count of the number of balls faced and using the *runs_off_bat* field to create a rolling count of the number of 0s (dot balls) faced and 1s, 2s, 3s, 4s, 5s and 6s scored by a batter in an innings. The idea being that this will give us an idea of the way in which a batter goes about scoring their runs: whether they are happy to face dot balls and wait for a ball they can hit for 4 or 6 or whether they look to score from every ball they face but hit fewer boundaries.
 
 The pre-processing described above allowed us to group the data by *match_id* and *striker* and visualise the data as distinct innings played by individual batters. The scatter plot below shows the runs scored and balls faced in every individual innings by each of the eight current teams. The colours correspond to the position of the batter in the batting order, where 1-3 is classed as 'Top Order', 4-6 is classed as 'Middle Order', 7-9 is classed as 'Lower Order' and 10 and 11 are classed as the 'Tail'.
 
 ![](Plots/grid_team_order_balls_runs.png)
 
-The scatter plots unsurpisingly show that the top order batters play the longest innings for all teams, since they have the opportunity to bat for the longest time. For some teams there appears to be less of a difference between the type of innings played by top- and middle-order batters. For example, Delhi Capitals and Mumbai Indians have had some longer innings played middle-order batters, which could be an indication that their top-order batters are more likely to be dismissed early, allowing the middle-order batters to bat for longer. Whereas top-order batters from other teams seem to score at a similar rate regardless of the length of their innings, Royal Challengers Bangalore and Chennai Super Kings top-order batters appear to accelerate the scoring rate when they are able to play long innings.
+The scatter plots unsurpisingly show that the top order batters play the longest innings for all teams, since they have the opportunity to bat for the longest time. For some teams there appears to be less of a difference between the type of innings played by top- and middle-order batters. For example, DC and MI have had some longer innings played middle-order batters, which could be an indication that their top-order batters are more likely to be dismissed early, allowing the middle-order batters to bat for longer. Whereas top-order batters from other teams seem to score at a similar rate regardless of the length of their innings, RCB and CSK top-order batters appear to accelerate the scoring rate when they are able to play long innings.
 
 A batter's strike rate is the number of runs scored divided by the number of balls faced, multiplied by 100 and as a rate of run scoring can be used as a proxy for batting aggression. The line graphs below show how the strike rates of top-, middle-, lower-order and tailend batters have changed for each team over the history of the IPL.
 
 ![](Plots/grid_team_order_strikerate.png)
 
-The patterns vary greatly over the history of the competition, in particular the strike rates of tailend batters. This is an indicator of the unpredictability of tailend batters, largely due to their relative lack of batting ability and the fact they are often given license to try to score very quickly without too much concern for preserving their wicket. The relationship between the strike rate of top- and middle-order batters is consistent across time for some teams, such as Mumbai Indians and Royal Challengers Bangalore, whose middle-orders score more quickly than their top-orders, Rajasthan Royals, whose top-order batters score more quickly than their middle-order batters and Chennai Super Kings, whose top- and middle-order batters have always scored at similar rates.
+The patterns vary greatly over the history of the competition, in particular the strike rates of tailend batters. This is an indicator of the unpredictability of tailend batters, largely due to their relative lack of batting ability and the fact they are often given license to try to score very quickly without too much concern for preserving their wicket. The relationship between the strike rate of top- and middle-order batters is consistent across time for some teams, such as MI and RCB, whose middle-orders score more quickly than their top-orders, RR, whose top-order batters score more quickly than their middle-order batters and CSK, whose top- and middle-order batters have always scored at similar rates.
 
 Runs scored, balls faced and strike rates can only tell us so much about tactics. For example, it is impossible to tell whether a batter dismissed for 20 runs off 15 balls started slowly and had just started to accelerate when they were dismissed or whether they had scored at a constant rate throughout, or indeed what their strategy would have been had they not been dismissed when they were. The way in which an innings was compiled, the number of dot balls faced and the way a batter scored their runs, whether by hitting 1s and 2s or 4s and 6s, may help to further differentiate between different types of innings. The stacked bar plot below shows the proportion of balls faced by each team from which they scored 0, 1, 2, 3, 4, 5 and 6 runs off the bat.
 
 ![](Plots/bar_stacked_runtype_teams.png)
 
-It is evident from the above bar plot that Mumbai Indians face more dot balls but hit more balls for 6, whereas Sunrisers Hyderabad face fewer dot balls and run more 2s, but hit fewer balls for 6. More than anything, this graph shows that 3s and 5s are so rare in IPL cricket that they should not be included in the analysis as they are not likely to feature in the batting strategy of any of the teams.
+It is evident from the above bar plot that MI face more dot balls but hit more balls for 6, whereas SH face fewer dot balls and run more 2s, but hit fewer balls for 6. More than anything, this graph shows that 3s and 5s are so rare in IPL cricket that they should not be included in the analysis as they are not likely to feature in the batting strategy of any of the teams.
 
 The bar plot below shows how innings are compiled differently by top-, middle- and lower-order batters and tailenders.
 
 ![](Plots/bar_stacked_runtype_teams_order.png)
 
-Top-order batters face more dot balls than middle-order batters in all teams and more than lower-order batters in all teams apart from Royal Challengers Bangalore. The obvious explanation for this is that the first 6 overs of an IPL match are known as the PowerPlay, where only two fielders are allowed more than 30 yards from the wicket. This provides more opportunity for hitting the ball to the boundary but also fewer opportunities to run 1s and 2s. The top-order batters of Punjab Kings hit a higher proportion of the balls they face for 4 or 6 than the other teams, most notably Sunrisers Hyderabad.
+Top-order batters face more dot balls than middle-order batters in all teams and more than lower-order batters in all teams apart from RCB. The obvious explanation for this is that the first 6 overs of an IPL match are known as the PowerPlay, where only two fielders are allowed more than 30 yards from the wicket. This provides more opportunity for hitting the ball to the boundary but also fewer opportunities to run 1s and 2s. The top-order batters of PK hit a higher proportion of the balls they face for 4 or 6 than the other teams, most notably SH.
 
 ## Data Modelling and Model Evaluation
 
-K-means clustering is an unsupervised learning method that uses Euclidean distances to group individual observations into a number, k, of clusters. We will perform k-means clustering on the innings-by-innings data in an attempt to reveal more information about the batting strategies used by different IPL teams. The first 
+K-means clustering is an unsupervised learning method that uses Euclidean distances to group individual observations into a number, k, of clusters. We will perform k-means clustering on the innings-by-innings data in an attempt to reveal more information about the batting strategies used by different IPL teams.
 
 The parameters used in the k-means algorithm, as defined in the scikit-learn documentation, are described in the table below.
 
@@ -116,15 +116,15 @@ The clusters are described in the table below.
 
 |Cluster|Average runs (average balls)|Innings makeup|Batter category|Teams|
 |----|----|----|----|----|
-|0|14(14)|Over-indexed on dots and 4s|Top-order|Rajasthan Royals|
-|1|13(7)|Over-indexed on 4s|Lower-order/tail|Delhi Capitals, Kolkata Knight Riders|
-|2|1(3)|Dot balls|Tail|Chennai Super Kings and Sunrisers Hyderabad good at avoiding these innings|
-|3|27(21)|1s, 2s, 6s|Middle-order|Chennai Super Kings|
-|4|61(42)|1s, 2s, 4s, 6s|Top-order|Chennai Super Kings, Sunrisers Hyderabad|
-|5|21(9)|6s|Middle-/lower-order|Mumbai Indians, Kolkata Knight Riders|
-|6|8(7)|2s|Middle-/lower-order/tail|Sunrisers Hyderabad, Punjab Kings, Chennai Super Kings|
-|7|4(4)|1s|Lower-order/tail|Sunrisers Hyderabad, Punjab Kings|
-|8|6(8)|Dot balls, 1s|Middle-/lower-order/tail|Punjab Kings, Royal Challengers Bangalore|
+|0|14(14)|Over-indexed on dots and 4s|Top-order|RR|
+|1|13(7)|Over-indexed on 4s|Lower-order/tail|DC, KKR|
+|2|1(3)|Dot balls|Tail|CSK and SH good at avoiding these innings|
+|3|27(21)|1s, 2s, 6s|Middle-order|CSK|
+|4|61(42)|1s, 2s, 4s, 6s|Top-order|CSK, SH|
+|5|21(9)|6s|Middle-/lower-order|MI, KKR|
+|6|8(7)|2s|Middle-/lower-order/tail|SH, PK, CSK|
+|7|4(4)|1s|Lower-order/tail|SH, PK|
+|8|6(8)|Dot balls, 1s|Middle-/lower-order/tail|PK, RCB|
 
 This solution offers a bit more discrimination between teams and therefore enables us to tell a bit more about the batting tactics employed by different teams. However, the clusters are still defined slightly too much by the number of runs scored and balls faced, rather than which scoring shots have been used to put together the innings. Scoring a lot of runs from a small number of balls is a universal goal of batting in T20 cricket and this therefore tells us more about who has been successful than how teams try to go about achieving this goal. For the third clustering solution, *max_nclus* has been increased to 60, *n_init* has been increased to 40, *max_iter* has been increased to 1000 and the following variables have been added.
 
@@ -143,17 +143,17 @@ The clusters are described in the table below.
 
 |Cluster|Average runs (average balls)|Innings makeup|Batter category|Teams|
 |----|----|----|----|----|
-|0|63(46)|1s, 2s, 4s|Top-order|Sunrisers Hyderabad, Chennai Super Kings|
-|1|1(3)|Dots|Lower-order/tail|Chennai Super Kings and Sunrisers Hyderabad good at avoiding these innings|
-|2|11(12)|Dots, 4s|Top-order|Rajasthan Royals, avoided by Sunrisers Hyderabad and Punjab Kings|
-|3|8(6)|2s|Middle-/lower-order/tail|Sunrisers Hyderabad, Punjab Kings|
-|4|4(4)|1s|Lower-order/tail|Sunrisers Hyderabad, Punjab Kings|
-|5|13(7)|4s|Lower-order/tail|Delhi Capitals, Kolkata Knight Riders|
-|6|20(10)|6s|Middle-/lower-order|Mumbai Indians, Sunrisers Hyderabad|
-|7|76(42)|4s, 6s|Top-order|Chennai Super Kings, Royal Challengers Bangalore|
-|8|36(29)|4s|Top-order|Chennai Super Kings, Mumbai Indians|
-|9|7(8)|1s|Middle-/lower-order/tail|Punjab Kings, Royal Challengers Bangalore|
-|10|27(21)|1s, 2s, 6s|Middle-order|Chennai Super Kings, Rajasthan Royals|
+|0|63(46)|1s, 2s, 4s|Top-order|SH, CSK|
+|1|1(3)|Dots|Lower-order/tail|CSK and SH good at avoiding these innings|
+|2|11(12)|Dots, 4s|Top-order|RR, avoided by SH and PK|
+|3|8(6)|2s|Middle-/lower-order/tail|SH, PK|
+|4|4(4)|1s|Lower-order/tail|SH, PK|
+|5|13(7)|4s|Lower-order/tail|DC, KKR|
+|6|20(10)|6s|Middle-/lower-order|MI, SH|
+|7|76(42)|4s, 6s|Top-order|CSK, RCB|
+|8|36(29)|4s|Top-order|CSK, MI|
+|9|7(8)|1s|Middle-/lower-order/tail|PK, RCB|
+|10|27(21)|1s, 2s, 6s|Middle-order|CSK, RR|
 
 
 
