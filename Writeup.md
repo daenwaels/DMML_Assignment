@@ -228,21 +228,20 @@ The clusters are described in the table below.
 
 There are some clear similarities between the clusters in solutions 2 and 3, as illustrated by the table below.
 
-|                   |Solution 2 Cluster||
-|Solution 3 Cluster |0|1|2|3|4|5|6|7|8|9|10|
-|====|----/----/----/----/----/----/----/----/----/----/----/
-|    |0|0|0|0|0|0|0|0|0|0|0|
+|Solution 2 Cluster|0|1|2|3|4|5|6|7|8|9|10|
+|----|----|----|----|----|----|----|----|----|----|----|----|
+|Solution 3 Cluster||||||||||||
+|0|0|0|13|0|0|82|0|0|0|3|2|
+|1|1|0|0|0|0|0|0|2|61|0|35|
+|2|69|0|0|0|0|0|0|2|26|0|3|
+|3|0|0|2|82|1|0|0|0|0|7|8|
+|4|0|0|2|0|1|1|91|0|0|4|1|
+|5|0|66|20|0|0|0|0|0|0|14|0|
+|6|0|0|3|1|0|5|23|2|18|1|47|
+|7|0|0|0|0|36|0|0|0|0|62|1|
+|8|0|0|49|0|0|2|2|0|7|24|17|
+|9|14|0|0|0|0|0|0|82|3|0|1|
 
-|              | Header 1        | Header 2                       || Header 3                       ||
-|              | Subheader 1     | Subheader 2.1  | Subheader 2.2  | Subheader 3.1  | Subheader 3.2  |
-|==============|-----------------|----------------|----------------|----------------|----------------|
-| Row Header 1 | 3row, 3col span                                 ||| Colspan only                   ||
-| Row Header 2 |       ^                                         ||| Rowspan only   | Cell           |
-| Row Header 3 |       ^                                         |||       ^        | Cell           |
-| Row Header 4 |  Row            |  Each cell     |:   Centered   :| Right-aligned :|: Left-aligned  |
-:              :  with multiple  :  has room for  :   multi-line   :    multi-line  :  multi-line    :
-:              :  lines.         :  more text.    :      text.     :         text.  :  text.         :
-|--------------|-----------------|----------------|----------------|----------------|----------------|
 
 
 ## References
