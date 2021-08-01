@@ -687,10 +687,11 @@ fig.savefig("../Plots/box_4.png")
 
 # Crosstab of solution 3 v 4 to see which ones, if any, are equivalent
 
-crosstab_3_4 = pd.crosstab(df_clustered_3['inns_clus'], 
-                           df_clustered_4['inns_clus'],
-                           rownames = ['Solution 3'],
-                           colnames = ['Solution 4'])
+crosstab_3_4 = (pd.crosstab(df_clustered_4['inns_cluster'], 
+                           df_clustered_3['inns_cluster'],
+                           rownames = ['Solution 4'],
+                           colnames = ['Solution 3'])
+    .apply(lambda r: round(100*r/r.sum()), axis=1))
 
 
 
