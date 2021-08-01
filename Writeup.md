@@ -228,10 +228,10 @@ The clusters are described in the table below.
 
 There are some clear similarities between the clusters in solutions 2 and 3, as illustrated by the table below.
 
-||Solution 2 Cluster|
-|Solution 3 Cluster|0|1|2|3|4|5|6|7|8|9|10|
+|                   |Solution 2 Cluster||
+|Solution 3 Cluster |0|1|2|3|4|5|6|7|8|9|10|
 |====|----/----/----/----/----/----/----/----/----/----/----/
-||0|0|0|0|0|0|0|0|0|0|0|
+|    |0|0|0|0|0|0|0|0|0|0|0|
 
 
 
