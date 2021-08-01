@@ -107,10 +107,17 @@ def ballbyballvars(df):
                           np.where(df['bat_order_non_striker']<=8,
                                    'Lower','Tail'))),['Top','Middle','Lower','Tail'])
     
+    df['bat_innings_strike_rate'] = 100*df['bat_innings_runs']/df['bat_innings_balls_faced']
+    
     return df
 
 def clusinns_kmeans(df,categorical_features,numeric_features,prof_features,init='k-means++',n_init=10,
                     max_iter=300,random_state=None,max_nclus=20):
+    
+    # Define teams
+    teams = ['Chennai Super Kings','Delhi Capitals','Kolkata Knight Riders',
+             'Mumbai Indians','Punjab Kings','Rajasthan Royals',
+             'Royal Challengers Bangalore','Sunrisers Hyderabad']
     
     # One-hot encode categorical features
     df_kmeans_unstandardised = pd.get_dummies(df,columns = categorical_features,drop_first = True)
@@ -150,7 +157,7 @@ def clusinns_kmeans(df,categorical_features,numeric_features,prof_features,init=
     # Add cluster numbers to df_all_matches_bat_inns
     df_clustered = df.copy()
     df_clustered['inns_cluster'] = kmeans.predict(df_kmeans_standardised)
-    df_clustered['bat_innings_strike_rate'] = 100*df_clustered['bat_innings_runs']/df_clustered['bat_innings_balls_faced']
+    #df_clustered['bat_innings_strike_rate'] = 100*df_clustered['bat_innings_runs']/df_clustered['bat_innings_balls_faced']
     
     # Add one-hot encoded columns to df_all_matches_bat_inns
     df_clustered = pd.get_dummies(df_clustered,
@@ -219,3 +226,61 @@ def clusinns_kmeans(df,categorical_features,numeric_features,prof_features,init=
           pivot_table(index=['variable','variable_mean'],columns='inns_cluster'))
     
     return df_clustered, GI, fig, fig2
+
+def innsstage_strikerate(df):
+    
+    # Runs scored, balls faced and strike rate in each 5 ball block
+    df = df.set_index(['match_id','striker'])
+    df['bat_innings_1_5_strike_rate'] = (100*(df.where(
+            df.bat_innings_balls_faced <= 5).groupby(['match_id','striker'])
+        ['runs_off_bat'].sum())/
+        (df.where((df.bat_innings_balls_faced <= 5) & (df.wides.isna()))
+        .groupby(['match_id','striker'])['bat_innings_balls_faced'].count()))
+    
+    df['bat_innings_6_10_strike_rate'] = (100*df.where(
+            (df.bat_innings_balls_faced > 5) &
+            (df.bat_innings_balls_faced <= 10)).groupby(['match_id','striker'])
+        ['runs_off_bat'].sum()/
+        (df.where((df.bat_innings_balls_faced > 5) &
+                  (df.bat_innings_balls_faced <= 10) & (df.wides.isna()))
+        .groupby(['match_id','striker'])['bat_innings_balls_faced'].count()))
+    
+    df['bat_innings_11_15_strike_rate'] = (100*df.where(
+            (df.bat_innings_balls_faced > 10) &
+            (df.bat_innings_balls_faced <= 15)).groupby(['match_id','striker'])
+        ['runs_off_bat'].sum()/
+        (df.where((df.bat_innings_balls_faced > 10) &
+                  (df.bat_innings_balls_faced <= 15) & (df.wides.isna()))
+        .groupby(['match_id','striker'])['bat_innings_balls_faced'].count()))
+    
+    df['bat_innings_16_20_strike_rate'] = (100*df.where(
+            (df.bat_innings_balls_faced > 15) &
+            (df.bat_innings_balls_faced <= 20)).groupby(['match_id','striker'])
+        ['runs_off_bat'].sum()/
+        (df.where((df.bat_innings_balls_faced > 15) &
+                  (df.bat_innings_balls_faced <= 20) & (df.wides.isna()))
+        .groupby( ['match_id','striker'])['bat_innings_balls_faced'].count()))
+    
+    df['bat_innings_21_25_strike_rate'] = (100*df.where(
+            (df.bat_innings_balls_faced > 21) &
+            (df.bat_innings_balls_faced <= 25)).groupby(['match_id','striker'])
+        ['runs_off_bat'].sum()/
+        (df.where((df.bat_innings_balls_faced > 21) &
+                  (df.bat_innings_balls_faced <= 25) & (df.wides.isna()))
+        .groupby(['match_id','striker'])['bat_innings_balls_faced'].count()))
+    
+    df['bat_innings_26_30_strike_rate'] = (100*df.where(
+            (df.bat_innings_balls_faced > 26) &
+            (df.bat_innings_balls_faced <= 30)).groupby(['match_id','striker'])
+        ['runs_off_bat'].sum()/
+        (df.where((df.bat_innings_balls_faced > 26) & 
+                  (df.bat_innings_balls_faced <= 30) & (df.wides.isna()))
+        .groupby(['match_id','striker'])['bat_innings_balls_faced'].count()))
+    
+    df['bat_innings_31plus_strike_rate'] = (100*df.where(
+            df.bat_innings_balls_faced > 30).groupby(['match_id','striker'])
+        ['runs_off_bat'].sum()/
+        (df.where((df.bat_innings_balls_faced > 30) & (df.wides.isna()))
+        .groupby(['match_id','striker'])['bat_innings_balls_faced'].count()))
+    
+    return df

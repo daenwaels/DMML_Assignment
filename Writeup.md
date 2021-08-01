@@ -1,9 +1,9 @@
 ## Background and Project Aim
 The bat and ball game of cricket is widely considered to have originated in England in the 16th century and as a result of the British empire has since become one of the most played and watched sports in the world. According to the International Cricket Council (2018), there are over 1 billion cricket supporters worldwide and nearly 90% of them come from the Indian subcontinent. It is the most popular sport in Pakistan, Bangladesh, Sri Lanka, Afghanistan and India with support for the game is particularly fervent in the latter.
 
-Twenty20 (T20) cricket is a form of the game that was first played professionally in 2003, when the England and Wales Cricket Board (ECB) introduced the Twenty20 Cup to the domestic schedule, to be played by the 18 First Class counties. T20 is a shortened form of the game where two teams of 11 players play one innings each. One teams bowls 20 overs, each consisting of 6 deliveries, at the other team and the aim is to score more runs than the other team. Two members of the batting team are batting at any one time and runs are scored by both running from one end of the wicket, a 22 yard by 10 foot strip of grass in the middle of the pitch, to the other, or when the ball crosses the boundary of the pitch either after hitting the ground (4 runs) or without hitting the ground after making contact with the bat (6 runs). The bowling team attempt to prevent the batting team from scoring runs and also attempt to get the batters out (take wickets), principally by bowling the ball at the stumps, two sets of three wooden poles at each end of the wicket, catching the ball off the bat before it bounces or hitting the stumps with the ball while the batters are in the process of completing a run. Since two batters have to be in at a time, when a team loses its 10th wicket the innings is completed.
+Twenty20 (T20) cricket is a form of the game that was first played professionally in 2003, when the England and Wales Cricket Board (ECB) introduced the Twenty20 Cup to the domestic schedule, to be played by the 18 First Class counties. T20 is a shortened form of the game where two teams of 11 players play one innings each. Each teams bowls 20 overs, each consisting of 6 deliveries, at the other team and the aim is to score the most runs. Two members of the batting team bat at any one time and runs are scored by both running from one end of the wicket, a 22 yard by 10 foot strip of grass in the middle of the pitch, to the other, or when the ball crosses the boundary of the pitch either after hitting the ground (4 runs) or without hitting the ground after making contact with the bat (6 runs). The bowling team attempt to prevent the batting team from scoring runs and also attempt to get the batters out (take wickets), principally by bowling the ball at the stumps, two sets of three wooden poles at each end of the wicket, catching the ball off the bat before it bounces or hitting the stumps with the ball while the batters are in the process of completing a run. Since two batters have to be in at a time, when a team loses its 10th wicket the innings is completed.
 
-In 2007 India beat their biggest rivals, Pakistan, in the final of the inaugural Twenty20 World Cup. Prior to this, Indian supporters had been sceptical of the newest format of the game, but the international team’s success led to a burgeoning interest and the advent of the Indian Premier League (IPL), which was announced by the Board of Control for Cricket in India (BCCI) in September 2007 and would start in 2008. The inaugural edition consisted of 8 teams belonging to franchises that were sold for an initial $723.59m (https://www.espncricinfo.com/story/ipl-announces-franchise-owners-333193) playing a round robin, followed by semi-finals and a final. The format has varied slightly from 2008 to the present day, but has always been contested by 8, 9 or 10 franchise teams. The sum of money paid for the franchises before the 2008 tournament is a reflection of the status of the owners of the franchises, including Bollywood stars and multinational conglomerates. The wealth of the franchise owners meant they were able to entice many of the world’s best cricketers to play in the IPL and this, along with the marketability of and excitement provided by the short format of the game has led to it being one of the most popular sporting events in the world.
+In 2007 India beat their biggest rivals, Pakistan, in the final of the inaugural Twenty20 World Cup. Prior to this, Indian supporters had been sceptical of the newest format of the game, but the international team’s success led to a burgeoning interest and the advent of the Indian Premier League (IPL), which was announced by the Board of Control for Cricket in India (BCCI) in September 2007 and would start in 2008. The inaugural edition consisted of 8 teams belonging to franchises that were sold for an initial $723.59m (ESPN Cricinfo, 2008) playing a round robin, followed by semi-finals and a final. The format has varied slightly from 2008 to the present day, but has always been contested by 8, 9 or 10 franchise teams. The sum of money paid for the franchises before the 2008 tournament is a reflection of the status of the owners of the franchises, including Bollywood stars and multinational conglomerates. The wealth of the franchise owners meant they were able to entice many of the world’s best cricketers to play in the IPL and this, along with the marketability of and excitement provided by the short format of the game has led to it being one of the most popular sporting events in the world, with an average of 116 million unique viewers watching 14 matches in the first two weeks of the 2020 competition (Broadcast Audience Research Council India, 2021).
 
 Some sports, like football, are continuous in nature and can be difficult to analyse statistically. However, cricket is a sport that consists of a number of discrete events (balls, or deliveries), the outcome of which can be measured in terms of the number of runs and wickets (0 or 1) that result from it. Such ball-by-ball data is widely available on the internet and can be used to gain insights into the game (Player evaluation in Twenty20 cricket, Davis, Perera & Swartz, 2015). More complex data has also been collected in recent years, including ball tracking data that can illustrate where the ball was released from, where it hit the ground, how fast it was travelling and where it passed the batter and the stumps. This revolution in data collection has enriched the simple ball-by-ball data, but is not publicly available due to the costs associated with collecting it.
 
@@ -194,10 +194,55 @@ The clusters are described in the table below.
 |7|76(42)|4s, 6s|Top-order|CSK, RCB|
 |8|36(29)|4s|Top-order|CSK, MI|
 |9|7(8)|1s|Middle-/lower-order/tail|PK, RCB|
-|10|27(21)|1s, 2s, 6s|Middle-order|CSK, RR|
+|10|27(21)|1s, 2s|Middle-order|CSK, RR|
+
+This solution is a big improvement, in that it there are more clusters that define what could be classed as 'good' innings and therefore that could be part of a genuine batting strategy. The solution contains two clusters with mean scores of greater than 50 but that are compiled in different ways: cluster 0 contains more 1s and 2s as well as some 4s, whereas the innings in cluster 7 contain the highest proportion of 4s and 6s. In addition to this, there are three clusters with mean scores between 20 and 40, again compiled in different ways and by different types of batter. Cluster 6 is defined by its high strike rate and relatively astronomical rate of 6s and the innings are played predominantly by middle-/lower-order batters, whereas the innings in cluster 8 are played mainly by top-order batters and contain more 4s and fewer 2s than the average innings, probably because of the powerplay fielding restrictions that are more often in place when top-order batters are batting. Cluster 10 is defined mainly by its low dot ball proportion and high proportion of 1s and 2s and the innings are played by hard-running middle-order batters. The fact that CSK over-index on five of these six 'good' innings is in part a reflection of the fact that they have reached eight of the 13 IPL finals, more than any other team, but also gives an insight into a type of innings that their batters do not often play, in cluster 6. One thing this solution does not tell us is how the strike rate progresses through the innings. In an attempt to differentiate on this basis, for the next solution the following features were added.
+
+|Variable|Description|
+|----|----|
+|bat_innings_1_5_strike_rate|Strike rate for balls 1 to 5 of a batter's innings|
+|bat_innings_6_10_strike_rate|Strike rate for balls 6 to 10|
+|bat_innings_11_15_strike_rate|Strike rate for balls 11 to 15|
+|bat_innings_16_20_strike_rate|Strike rate for balls 16 to 20|
+|bat_innings_21_25_strike_rate|Strike rate for balls 21 to 25|
+|bat_innings_26_30_strike_rate|Strike rate for balls 26 to 30|
+|bat_innings_31plus_strike_rate|Strike rate for ball 31 onwards|
+
+![](Plots/box_4.png)
+![](Plots/bar_4.png)
+
+The clusters are described in the table below.
+
+|Cluster|Average runs (average balls)|Innings makeup|Strike rate pattern|Batter category|Teams|
+|----|----|----|----|----|----|
+|0|12(6)|4s|Very fast start (first 5 balls SR: 200)|Lower-order|DC, KKR|
+|1|36(28)|1s, 4s|Slow start, accelerate through balls 11 to 25|Top-/middle-order|CSK|
+|2|57(43)|1s, 2s, 4s|Slow start, accelerate throughout innings (31+ balls SR: 152)|Top-order|CSK, SH|
+|3|8(7)|2s|Relatively fast start (first 5 balls SR: 126)|Lower-order/tail|PK, SH|
+|4|14(6)|6s|Very fast start (first 5 balls SR: 243, next 5 balls SR: 168|Lower-order/tail|MI|
+|5|1(4)|Dot balls|N/A|Tail|Fairly universal|
+|6|31(18)|2s, 4s, 6s|Fairly quick start, accelerate rapidly (balls 11 to 15 SR: 220)|Middle-order|CSK|
+|7|5(6)|1s|N/A|Lower-order/tail|PK, SH|
+|8|15(15)|Not conclusive, slightly more dots and 4s than average|Below average throughout innings|Top-order|Fairly universal|
+|9|79(43)|4s, 6s|Relatively fast start, accelerate steadily throughout long innings|Top-order|RCB, CSK|
+
+There are some clear similarities between the clusters in solutions 2 and 3, as illustrated by the table below.
+
+||Solution 2 Cluster|
+|Solution 3 Cluster|0|1|2|3|4|5|6|7|8|9|10|
+|====|----/----/----/----/----/----/----/----/----/----/----/
+||0|0|0|0|0|0|0|0|0|0|0|
+
+
 
 
 ## References
+
+[International Cricket Council, 2018] - https://www.icc-cricket.com/media-releases/759733
+
+[ESPN Cricinfo, 2008] - https://www.espncricinfo.com/story/ipl-announces-franchise-owners-333193
+
+[Broadcast Audience Research Council India, 2021] -  https://www.livemint.com/industry/media/ipl-viewership-sees-double-digit-decline-in-first-two-weeks-over-2020-11619709505228.html
 
 [Duff and Phelps, 2019] - https://www.duffandphelps.com/insights/publications/valuation/ipl-brand-valuation-report-2019
 
