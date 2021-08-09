@@ -13,7 +13,7 @@ from sklearn.cluster import KMeans
 from kneed import KneeLocator
 import matplotlib.pyplot as plt
 import seaborn as sns
-from functions import ballbyballvars, clusinns_kmeans
+from functions import ballbyballvars, clusinns_kmeans, innsstage_strikerate
 import matplotlib.patches as mpatches
 
 # Define competition. Choose one of the following:
@@ -101,7 +101,7 @@ df_all_matches = (df_all_matches[df_all_matches['batting_team'].isin(teams)].res
 #%% Non-IPL-specific
     
 # Remove records with innings > 2 from the data. These will have come from super overs, which are not counted towards
-# players' career stats.
+# players' career stats. proc stands for processed
 df_all_matches_proc = df_all_matches[df_all_matches['innings']<=2].reset_index()
 
 # Use ballbyballvars function to create extra variables
@@ -325,7 +325,9 @@ plt.savefig("../Plots/bar_stacked_runtype_teams_order.png")
 # - Most teams' (CSK, DC, KKR, MI, RR, SH) lower orders hit greater proportion of balls for 6 than top and middle
 # - Some top orders (PK) hit a lot more boundaries as a proportion of balls faced than others (SH)
 
-# Try k-means clustering
+#%% Try k-means clustering
+
+#%% First iteration
 
 numeric_features_1 = ['bat_innings_runs','bat_innings_balls_faced','bat_innings_0s_prop','bat_innings_1s_prop',
                       'bat_innings_2s_prop','bat_innings_4s_prop','bat_innings_6s_prop','bat_order_striker']
@@ -392,6 +394,8 @@ pd.value_counts(df_clustered_2.inns_cluster)
 
 # This looks even better at first glance
 
+#%% Second iteration
+
 # Add absolute number of 0s, 1s, ..., 6s to see if it increases ability to tease out other clusters.
 
 numeric_features_3 = ['bat_innings_runs','bat_innings_balls_faced','bat_innings_0s_prop','bat_innings_1s_prop',
@@ -447,20 +451,374 @@ ax[2,1].set(ylabel='4s proportion',xlabel='Innings cluster')
 ax[2,2].set(ylabel='6s proportion',xlabel='Innings cluster')
 plt.tight_layout()
 
+#%% Add run rates by different stages of the innings as a way to add a
+# time-series element without doing DTW.
+
+# First visualise this
+# Create 'over' field from ball
+df_all_matches_proc_copy = df_all_matches_proc.copy()
+
+df_all_matches_proc_copy['over'] = np.ceil(df_all_matches_proc_copy['ball'])
+
+# Get top 10 batters in each order category for 2020 IPL (runs scored)
+cat_2020_top10s = (df_all_matches_proc_copy[
+        (df_all_matches_proc_copy['year']==2020)].groupby(
+        ['bat_order_striker_cat','striker']).agg({'runs_off_bat':'sum'})
+        ['runs_off_bat'].groupby('bat_order_striker_cat', group_keys=False)
+        .apply(lambda x: x.sort_values(ascending=False).head(3)).index
+        .get_level_values('striker'))
+
+top_2020_top10 = (df_all_matches_proc_copy[(df_all_matches_proc_copy['year']==2020) & 
+                                     (df_all_matches_proc_copy[
+                                             'bat_order_striker_cat']=='Top')]
+    .groupby(['striker']).agg({'runs_off_bat':'sum'})
+    .nlargest(10, 'runs_off_bat').index.get_level_values('striker'))
+
+# Calculate strike rate by over for each batter
+df_all_matches_batter_over = (df_all_matches_proc_copy
+                              [(df_all_matches_proc_copy.wides.isna()) & 
+                               (df_all_matches_proc_copy['bat_order_striker_cat'] == 
+                                'Top') &
+                               (df_all_matches_proc_copy.striker.isin(
+                                       top_2020_top10))]
+                              .groupby(['striker',
+                                        'bat_order_striker_cat','over']).agg(
+                                {'ball':'count','runs_off_bat':'sum'}
+                                ).reset_index()
+    .rename(columns={'ball':'balls'}).dropna(subset=['runs_off_bat']))
+
+df_all_matches_batter_over['strike_rate'] = (100*df_all_matches_batter_over
+                          ['runs_off_bat']/df_all_matches_batter_over['balls'])
+
+# Plot    
+fig,ax = plt.subplots() 
+ax = sns.lineplot(data=df_all_matches_batter_over,hue='striker',x='over',
+                  y='strike_rate',style='striker',markers=True)
+plt.tight_layout()
+plt.savefig("../Plots/toporder_over_strikerate.png")
+
+# Categorise overs as powerplay, middle and death
+df_all_matches_proc_copy['innings_stage'] = (pd.Categorical(np.where(df_all_matches_proc_copy['over']<=6,
+                   'Powerplay',np.where(df_all_matches_proc_copy['over']<=14,
+                                        'Middle','Death')),
+    categories=['Powerplay','Middle','Death'],ordered=True))
+
+# Calculate strike rate by innings stage for each batter
+df_all_matches_batter_stage = (df_all_matches_proc_copy
+                               [(df_all_matches_proc_copy.wides.isna()) & 
+                                (df_all_matches_proc_copy
+                                 ['bat_order_striker_cat'] == 'Top') &
+                                 (df_all_matches_proc_copy.striker.isin(
+                                         top_2020_top10))]
+                                 .groupby(['striker','bat_order_striker_cat',
+                                           'innings_stage']).agg(
+                                 {'ball':'count','runs_off_bat':'sum'}
+                                 ).reset_index()
+    .rename(columns={'ball':'balls'}).dropna(subset=['runs_off_bat']))
+
+df_all_matches_batter_stage['strike_rate'] = (100*df_all_matches_batter_stage
+                           ['runs_off_bat']/
+                           df_all_matches_batter_stage['balls'])
+
+# Plot
+fig,ax = plt.subplots() 
+ax = sns.lineplot(data=df_all_matches_batter_stage,hue='striker',
+                  x='innings_stage',y='strike_rate',style='striker',
+                  markers=True)
+plt.tight_layout()
+plt.savefig("../Plots/toporder_stage_strikerate.png")
+
+# Create new function to add strike rate through an innings - 5 ball blocks - then try clustering again
+
+df_all_matches_proc = innsstage_strikerate(df_all_matches_proc)
+
+df_all_matches_proc = df_all_matches_proc.reset_index()
+
+# Group by match_id, innings and striker to get information on individual
+# innings by batters.
+bat_innings_balls_strike_rate_vars_inf = ['bat_innings_1_5_strike_rate_inf',
+        'bat_innings_6_10_strike_rate_inf','bat_innings_11_15_strike_rate_inf',
+        'bat_innings_16_20_strike_rate_inf','bat_innings_21_25_strike_rate_inf',
+        'bat_innings_26_30_strike_rate_inf','bat_innings_31plus_strike_rate_inf']
+
+bat_innings_balls_strike_rate_vars = ['bat_innings_1_5_strike_rate',
+        'bat_innings_6_10_strike_rate','bat_innings_11_15_strike_rate',
+        'bat_innings_16_20_strike_rate','bat_innings_21_25_strike_rate',
+        'bat_innings_26_30_strike_rate','bat_innings_31plus_strike_rate']
+
+df_all_matches_bat_inns = (df_all_matches_proc
+                           .sort_values(['match_id','innings','ball'])
+                           .groupby(['match_id','innings','striker']).tail(1)
+                           [['match_id','venue','innings','batting_team',
+                             'bowling_team','striker','year',
+                             'bat_innings_runs','bat_innings_balls_faced',
+                             'bat_innings_0s','bat_innings_0s_prop',
+                             'bat_innings_1s','bat_innings_1s_prop',
+                             'bat_innings_2s','bat_innings_2s_prop',
+                             'bat_innings_3s','bat_innings_3s_prop',
+                             'bat_innings_4s','bat_innings_4s_prop',
+                             'bat_innings_5s','bat_innings_5s_prop',
+                             'bat_innings_6s','bat_innings_6s_prop',
+                             'inns_runs_off_bat','inns_extras','inns_wides',
+                             'inns_noballs','inns_byes','inns_legbyes',
+                             'inns_penalty','inns_wicket','bat_order_striker',
+                             'bat_order_striker_cat',
+                             'bat_innings_1_5_strike_rate',
+                             'bat_innings_6_10_strike_rate',
+                             'bat_innings_11_15_strike_rate',
+                             'bat_innings_16_20_strike_rate',
+                             'bat_innings_21_25_strike_rate',
+                             'bat_innings_26_30_strike_rate',
+                             'bat_innings_31plus_strike_rate',
+                             'bat_innings_strike_rate']])
+
+for var, var_inf in zip(bat_innings_balls_strike_rate_vars, 
+                        bat_innings_balls_strike_rate_vars_inf):
+    df_all_matches_bat_inns[var_inf] = (df_all_matches_bat_inns[var].fillna(0))
+
+#%% Third iteration
+
+# Add strike rates throughout innings
+
+numeric_features_4 = ['bat_innings_runs','bat_innings_balls_faced','bat_innings_0s_prop','bat_innings_1s_prop',
+                      'bat_innings_2s_prop','bat_innings_4s_prop','bat_innings_6s_prop','bat_order_striker',
+                      'bat_innings_0s','bat_innings_1s','bat_innings_2s','bat_innings_4s','bat_innings_6s',
+                      'bat_innings_1_5_strike_rate_inf','bat_innings_6_10_strike_rate_inf','bat_innings_11_15_strike_rate_inf',
+                      'bat_innings_16_20_strike_rate_inf','bat_innings_21_25_strike_rate_inf','bat_innings_26_30_strike_rate_inf',
+                      'bat_innings_31plus_strike_rate_inf']
+
+prof_features_4 = ['bat_innings_runs','bat_innings_balls_faced','bat_innings_strike_rate','bat_innings_0s_prop',
+                   'bat_innings_1s_prop','bat_innings_2s_prop','bat_innings_4s_prop','bat_innings_6s_prop',
+                   'bat_order_striker','bat_order_striker_cat_Top','bat_order_striker_cat_Middle',
+                   'bat_order_striker_cat_Lower','bat_order_striker_cat_Tail','batting_team_Chennai Super Kings',
+                   'batting_team_Delhi Capitals','batting_team_Kolkata Knight Riders','batting_team_Mumbai Indians',
+                   'batting_team_Punjab Kings','batting_team_Rajasthan Royals','batting_team_Royal Challengers Bangalore',
+                   'batting_team_Sunrisers Hyderabad','bat_innings_1_5_strike_rate','bat_innings_6_10_strike_rate',
+                   'bat_innings_11_15_strike_rate','bat_innings_16_20_strike_rate','bat_innings_21_25_strike_rate',
+                   'bat_innings_26_30_strike_rate','bat_innings_31plus_strike_rate']
+
+df_clustered_4, GI_4, box_4, bar_4 = clusinns_kmeans(df_all_matches_bat_inns,categorical_features_1,numeric_features_4,
+                                                     prof_features_4,max_nclus=60,n_init=40,max_iter=1000,random_state=1)
+#here
+box_4.savefig("../Plots/box_4.png")
+bar_4.savefig("../Plots/bar_4.png")
+
+GI_4.to_csv('GI_4.csv')
+#
+
+# Re-do box plots, include period strike rate variables
+df_clustered_melt = pd.melt(df_clustered_4, id_vars = ['inns_cluster'],
+                            value_vars = prof_features_4)
+
+df_clustered_melt['cluster_mean'] = df_clustered_melt.groupby(['inns_cluster','variable'])['value'].transform('mean')
+df_clustered_melt['variable_mean'] = df_clustered_melt.groupby(['variable'])['value'].transform('mean')
+df_clustered_melt['index'] = round(100*df_clustered_melt['cluster_mean']/df_clustered_melt['variable_mean'])
+
+fig,ax = plt.subplots(4,4, figsize=(10,12))
+box = sns.boxplot(ax=ax[0,0],data=df_clustered_4,x='inns_cluster',y='bat_innings_runs')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_runs'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[0,1],data=df_clustered_4,x='inns_cluster',y='bat_innings_balls_faced')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_balls_faced'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[0,2],data=df_clustered_4,x='inns_cluster',y='bat_innings_strike_rate')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_strike_rate'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.violinplot(ax=ax[0,3],data=df_clustered_4,x='inns_cluster',y='bat_order_striker')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_order_striker'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[1,0],data=df_clustered_4,x='inns_cluster',y='bat_innings_0s_prop')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_0s_prop'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[1,1],data=df_clustered_4,x='inns_cluster',y='bat_innings_1s_prop')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_1s_prop'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[1,2],data=df_clustered_4,x='inns_cluster',y='bat_innings_2s_prop')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_2s_prop'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[1,3],data=df_clustered_4,x='inns_cluster',y='bat_innings_4s_prop')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_4s_prop'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[2,0],data=df_clustered_4,x='inns_cluster',y='bat_innings_6s_prop')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_6s_prop'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[2,1],data=df_clustered_4,x='inns_cluster',y='bat_innings_1_5_strike_rate')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_1_5_strike_rate'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[2,2],data=df_clustered_4,x='inns_cluster',y='bat_innings_6_10_strike_rate')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_6_10_strike_rate'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[2,3],data=df_clustered_4,x='inns_cluster',y='bat_innings_11_15_strike_rate')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_11_15_strike_rate'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[3,0],data=df_clustered_4,x='inns_cluster',y='bat_innings_16_20_strike_rate')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_16_20_strike_rate'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[3,1],data=df_clustered_4,x='inns_cluster',y='bat_innings_21_25_strike_rate')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_21_25_strike_rate'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[3,2],data=df_clustered_4,x='inns_cluster',y='bat_innings_26_30_strike_rate')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_26_30_strike_rate'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+box = sns.boxplot(ax=ax[3,3],data=df_clustered_4,x='inns_cluster',y='bat_innings_31plus_strike_rate')
+box.axhline(df_clustered_melt[df_clustered_melt['variable']=='bat_innings_31plus_strike_rate'].groupby(['variable'])['value'].
+            transform('mean').drop_duplicates().item())
+ax[0,0].set(ylabel='Runs scored',xlabel='Innings cluster')
+ax[0,1].set(ylabel='Balls faced',xlabel='Innings cluster')
+ax[0,2].set(ylabel='Strike rate',xlabel='Innings cluster')
+ax[0,3].set(ylabel='Batting order',xlabel='Innings cluster')
+ax[1,0].set(ylabel='0s proportion',xlabel='Innings cluster')
+ax[1,1].set(ylabel='1s proportion',xlabel='Innings cluster')
+ax[1,2].set(ylabel='2s proportion',xlabel='Innings cluster')
+ax[1,3].set(ylabel='4s proportion',xlabel='Innings cluster')
+ax[2,0].set(ylabel='6s proportion',xlabel='Innings cluster')
+ax[2,1].set(ylabel='Strike rate: balls 1 to 5',xlabel='Innings cluster')
+ax[2,2].set(ylabel='Strike rate: balls 6 to 10',xlabel='Innings cluster')
+ax[2,3].set(ylabel='Strike rate: balls 11 to 15',xlabel='Innings cluster')
+ax[3,0].set(ylabel='Strike rate: balls 16 to 20',xlabel='Innings cluster')
+ax[3,1].set(ylabel='Strike rate: balls 21 to 25',xlabel='Innings cluster')
+ax[3,2].set(ylabel='Strike rate: balls 26 to 30',xlabel='Innings cluster')
+ax[3,3].set(ylabel='Strike rate: ball 31 onwards',xlabel='Innings cluster')
+plt.tight_layout()
+
+fig.savefig("../Plots/box_4.png")
+
+# Describe these clusters as I have the others
+
+# Crosstab of solution 3 v 4 to see which ones, if any, are equivalent
+
+crosstab_3_4 = (pd.crosstab(df_clustered_4['inns_cluster'], 
+                           df_clustered_3['inns_cluster'],
+                           rownames = ['Solution 4'],
+                           colnames = ['Solution 3'])
+    .apply(lambda r: round(100*r/r.sum()), axis=1))
 
 
 
 
+#%%
 
+# Runs scored, balls faced and strike rate in each 5 ball block
+df_all_matches_proc = df_all_matches_proc.set_index(['match_id','striker'])
+df_all_matches_proc['bat_innings_1_5_strike_rate'] = (100*(df_all_matches_proc
+                   .where(df_all_matches_proc.bat_innings_balls_faced <= 5)
+                   .groupby(['match_id','striker'])['runs_off_bat'].sum())/
+    (df_all_matches_proc.where((df_all_matches_proc.bat_innings_balls_faced 
+                                <= 5) & 
+                                (df_all_matches_proc.wides.isna())).groupby(
+            ['match_id','striker'])['bat_innings_balls_faced'].count()))
 
+df_all_matches_proc['bat_innings_6_10_strike_rate'] = (100*df_all_matches_proc
+                   .where((df_all_matches_proc.bat_innings_balls_faced > 5) &
+                          (df_all_matches_proc.bat_innings_balls_faced <= 10))
+                   .groupby(['match_id','striker'])['runs_off_bat'].sum()/
+    (df_all_matches_proc.where((df_all_matches_proc.bat_innings_balls_faced >
+                                5) &
+                               (df_all_matches_proc.bat_innings_balls_faced <=
+                                10) &
+                                (df_all_matches_proc.wides.isna())).groupby(
+            ['match_id','striker'])['bat_innings_balls_faced'].count()))
 
+df_all_matches_proc['bat_innings_11_15_strike_rate'] = (100*df_all_matches_proc
+                   .where((df_all_matches_proc.bat_innings_balls_faced > 10) &
+                          (df_all_matches_proc.bat_innings_balls_faced <= 15))
+                   .groupby(['match_id','striker'])['runs_off_bat'].sum()/
+    (df_all_matches_proc.where((df_all_matches_proc.bat_innings_balls_faced >
+                                10) &
+                               (df_all_matches_proc.bat_innings_balls_faced <=
+                                15) &
+                                (df_all_matches_proc.wides.isna())).groupby(
+            ['match_id','striker'])['bat_innings_balls_faced'].count()))
 
-# Line plots to show different shapes of innings
+df_all_matches_proc['bat_innings_16_20_strike_rate'] = (100*df_all_matches_proc
+                   .where((df_all_matches_proc.bat_innings_balls_faced > 15) &
+                          (df_all_matches_proc.bat_innings_balls_faced <= 20))
+                   .groupby(['match_id','striker'])['runs_off_bat'].sum()/
+    (df_all_matches_proc.where((df_all_matches_proc.bat_innings_balls_faced >
+                                15) &
+                               (df_all_matches_proc.bat_innings_balls_faced <=
+                                20) &
+                                (df_all_matches_proc.wides.isna())).groupby(
+            ['match_id','striker'])['bat_innings_balls_faced'].count()))
 
-df_all_matches['bat_inns_id'] = df_all_matches.groupby(['match_id','striker']).ngroup().astype(str).str.zfill(5)
+df_all_matches_proc['bat_innings_21_25_strike_rate'] = (100*df_all_matches_proc
+                   .where((df_all_matches_proc.bat_innings_balls_faced > 21) &
+                          (df_all_matches_proc.bat_innings_balls_faced <= 25))
+                   .groupby(['match_id','striker'])['runs_off_bat'].sum()/
+    (df_all_matches_proc.where((df_all_matches_proc.bat_innings_balls_faced >
+                                21) &
+                               (df_all_matches_proc.bat_innings_balls_faced <=
+                                25) &
+                                (df_all_matches_proc.wides.isna())).groupby(
+            ['match_id','striker'])['bat_innings_balls_faced'].count()))
 
-sns.lineplot(data=df_all_matches,x='bat_innings_balls_faced',y='bat_innings_runs',hue='bat_inns_id')
-# This takes ages, will have to rethink
+df_all_matches_proc['bat_innings_26_30_strike_rate'] = (100*df_all_matches_proc
+                   .where((df_all_matches_proc.bat_innings_balls_faced > 26) &
+                          (df_all_matches_proc.bat_innings_balls_faced <= 30))
+                   .groupby(['match_id','striker'])['runs_off_bat'].sum()/
+    (df_all_matches_proc.where((df_all_matches_proc.bat_innings_balls_faced >
+                                26) &
+                               (df_all_matches_proc.bat_innings_balls_faced <=
+                                30) &
+                                (df_all_matches_proc.wides.isna())).groupby(
+            ['match_id','striker'])['bat_innings_balls_faced'].count()))
 
+df_all_matches_proc['bat_innings_31plus_strike_rate'] = (100*df_all_matches_proc
+                   .where(df_all_matches_proc.bat_innings_balls_faced > 30)
+                   .groupby(['match_id','striker'])['runs_off_bat'].sum()/
+    (df_all_matches_proc.where((df_all_matches_proc.bat_innings_balls_faced >
+                                30) &
+                                (df_all_matches_proc.wides.isna())).groupby(
+            ['match_id','striker'])['bat_innings_balls_faced'].count()))
 
+df_all_matches_proc[['innings','ball','batting_team',
+                     'runs_off_bat','wides','bat_order_striker',
+                     'bat_order_striker_cat','bat_innings_runs',
+                     'bat_innings_balls_faced','innings_stage',
+                     'bat_innings_1_5_strike_rate',
+                     'bat_innings_6_10_strike_rate',
+                     'bat_innings_11_15_strike_rate',
+                     'bat_innings_16_20_strike_rate',
+                     'bat_innings_21_25_strike_rate',
+                     'bat_innings_26_30_strike_rate',
+                     'bat_innings_31plus_strike_rate']].to_csv("df_all_matches_proc.csv")
+
+# Runs scored, balls faced and strike rate in each stage of the innings - not sure this will be useful
+df_all_matches_proc = df_all_matches_proc.set_index(['match_id','striker'])
+df_all_matches_proc['bat_innings_powerplay_runs'] = (df_all_matches_proc.where(
+        df_all_matches_proc.innings_stage == 'Powerplay').
+        groupby(['match_id','striker'])['runs_off_bat'].sum())
+df_all_matches_proc['bat_innings_middle_runs'] = (df_all_matches_proc.where(
+        df_all_matches_proc.innings_stage == 'Middle').
+        groupby(['match_id','striker'])['runs_off_bat'].sum())
+df_all_matches_proc['bat_innings_death_runs'] = (df_all_matches_proc.where(
+        df_all_matches_proc.innings_stage == 'Death').
+        groupby(['match_id','striker'])['runs_off_bat'].sum())
+
+df_all_matches_proc['bat_innings_powerplay_balls_faced'] = (df_all_matches_proc
+                   .where((df_all_matches_proc.innings_stage == 'Powerplay')
+                   & (df_all_matches_proc.wides.isna()))
+                   .groupby(['match_id','striker'])['bat_innings_balls_faced']
+                   .count())
+df_all_matches_proc['bat_innings_middle_balls_faced'] = (df_all_matches_proc
+                   .where((df_all_matches_proc.innings_stage == 'Middle')
+                   & (df_all_matches_proc.wides.isna()))
+                   .groupby(['match_id','striker'])['bat_innings_balls_faced']
+                   .count())
+df_all_matches_proc['bat_innings_death_balls_faced'] = (df_all_matches_proc
+                   .where((df_all_matches_proc.innings_stage == 'Death')
+                   & (df_all_matches_proc.wides.isna()))
+                   .groupby(['match_id','striker'])['bat_innings_balls_faced']
+                   .count())
+
+df_all_matches_proc['bat_innings_powerplay_strike_rate'] = (100*
+                   df_all_matches_proc['bat_innings_powerplay_runs']/
+                   df_all_matches_proc['bat_innings_powerplay_balls_faced'])
+df_all_matches_proc['bat_innings_middle_strike_rate'] = (100*
+                   df_all_matches_proc['bat_innings_middle_runs']/
+                   df_all_matches_proc['bat_innings_middle_balls_faced'])
+df_all_matches_proc['bat_innings_death_strike_rate'] = (100*
+                   df_all_matches_proc['bat_innings_death_runs']/
+                   df_all_matches_proc['bat_innings_death_balls_faced'])
+                  
 

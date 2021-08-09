@@ -1,0 +1,12 @@
+[workspace]
+restore_data_on_startup = True
+save_data_on_exit = True
+save_history = True
+save_non_project_files = False
+project_type = empty-project-type
+recent_files = ['Code\\functions.py', 'Code\\Assignment_JWW.py']
+
+[main]
+version = 0.2.0
+recent_files = ['..\\..\\..\\SCDA\\Assignments\\02 SCDA Assignment\\02 SCDA Assignment\\02 SCDA Assignment - Q1.py', '..\\..\\..\\SCDA\\Assignments\\02 SCDA Assignment\\02 SCDA Assignment\\02 SCDA Assignment - Q2.py', 'Code\\player_metrics.py', 'Code\\Assignment_JWW.py', 'Code\\functions.py']
+
